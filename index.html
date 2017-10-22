@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <title>DubHacks 2017</title>
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://code.getmdl.io/1.2.1/material.purple-indigo.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700">
+
+    <link rel="stylesheet" href="css/main.css">
+
+    <script defer src="https://www.gstatic.com/firebasejs/3.3.0/firebase.js"></script>
+    <script defer src="https://code.getmdl.io/1.2.1/material.min.js"></script>
+
+    <head>
+
+        <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+            <header class="mdl-layout__header">
+                <div class="mdl-layout__header-row">
+                    <!-- Title -->
+                    <span class="mdl-layout-title">Title</span>
+                    <!-- Add spacer, to align navigation to the right -->
+                    <div class="mdl-layout-spacer"></div>
+                    <!-- Navigation. We hide it in small screens. -->
+                    <nav class="mdl-navigation mdl-layout--large-screen-only">
+                        <a class="mdl-navigation__link" href=resources.html>Resources</a>
+                    </nav>
+                </div>
+            </header>
+            <div class="mdl-layout__drawer">
+                <span class="mdl-layout-title">Title</span>
+                <nav class="mdl-navigation">
+                    <a class="mdl-navigation__link" href="">Link</a>
+                    <a class="mdl-navigation__link" href="">Link</a>
+                    <a class="mdl-navigation__link" href="">Link</a>
+                    <a class="mdl-navigation__link" href="">Link</a>
+                </nav>
+            </div>
+
+            <input type="range" min="1" max="24" value="12" step="1" class="slider" id="myRange">
+
+            <style>
+                #map {
+                    height: 100%;
+                }
+                /* Optional: Makes the sample page fill the window. */
+
+                html,
+                body {
+                    height: 100%;
+                    margin: 0;
+                    padding: 0;
+                }
+            </style>
+    </head>
+
+</head>
+
+<body>
+
+    <div id="map"></div>
+    <script>
+        var map;
+        var script = document.createElement('script');
+
+
+        document.getElementById("myRange").onchange = dothething;
+
+        function dothething (event) {
+            if (event != undefined) 
+            {
+                console.log("Slidy thing: "+event.target.value);
+            }
+
+            map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 14,
+                center: { lat: 47.6553, lng: -122.3035 },
+                mapTypeId: 'terrain'
+            });
+
+            // Create a <script> tag and set the USGS URL as the source.
+
+            // This example uses a local copy of the GeoJSON stored at
+            // http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_week.geojsonp
+            fetch('https://data.seattle.gov/resource/pu5n-trf4.json')
+                .then((resp) => resp.json())
+                .then(function (response) {
+                    
+                    var masterData = response;
+                    console.log("master length: " + masterData.length);
+
+                    var filteredData;
+                    if (event == undefined) 
+                    {
+                        filteredData =  masterData;
+                    }
+                    else
+                    {
+                        filteredData = filter(masterData, event.target.value);
+                    }
+
+                    console.log("filter length: " + filteredData.length);
+
+                    return filteredData;
+                }).then(render)
+
+            console.log("after");
+        }
+
+        function render(results) {
+            var heatmapData = [];
+            for (var i = 0; i < results.length; i++) {
+                var lat = results[i].latitude;
+                var lng = results[i].longitude;
+                var latLng = new google.maps.LatLng(lat, lng);
+                heatmapData.push(latLng);
+            }
+
+            var heatmap = new google.maps.visualization.HeatmapLayer({
+                data: heatmapData,
+                dissipating: true,
+                map: map
+            });
+            heatmap.set('radius', 70);
+            heatmap.set('gradient', [
+                'rgba(0, 255, 255, 0)',
+                'rgba(0, 255, 255, 1)',
+                'rgba(0, 191, 255, 1)',
+                'rgba(0, 127, 255, 1)',
+                'rgba(0, 63, 255, 1)',
+                'rgba(0, 0, 255, 1)',
+                'rgba(0, 0, 223, 1)',
+                'rgba(0, 0, 191, 1)',
+                'rgba(0, 0, 159, 1)',
+                'rgba(0, 0, 127, 1)',
+                'rgba(63, 0, 91, 1)',
+                'rgba(127, 0, 63, 1)',
+                'rgba(191, 0, 31, 1)',
+                'rgba(255, 0, 0, 1)'
+            ])
+        }
+
+        function filter(results, hour) {
+            var filteredResults = [];
+            console.log("master in: "+ results.length);
+
+            for (var i = 0; i < results.length; i++) {
+                if (new Date(results[i].event_clearance_date).getHours() == hour) {
+                    filteredResults.push(results[i]);
+                }
+            }
+            console.log("filter out: "+filteredResults.length);
+            return filteredResults;
+        }
+    </script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBI3-kTxGfbLC8tjRMKOBCfM4JoBr9KMOg&libraries=visualization&callback=dothething">
+
+    </script>
+</body>
+</div>
+</div>
+
+</html>
