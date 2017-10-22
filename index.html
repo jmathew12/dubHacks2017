@@ -21,7 +21,7 @@
             <header class="mdl-layout__header">
                 <div class="mdl-layout__header-row">
                     <!-- Title -->
-                    <span class="mdl-layout-title">Title</span>
+                    <span class="mdl-layout-title">SafeWalk UW</span>
                     <!-- Add spacer, to align navigation to the right -->
                     <div class="mdl-layout-spacer"></div>
                     <!-- Navigation. We hide it in small screens. -->
@@ -30,17 +30,18 @@
                     </nav>
                 </div>
             </header>
-            <div class="mdl-layout__drawer">
-                <span class="mdl-layout-title">Title</span>
-                <nav class="mdl-navigation">
-                    <a class="mdl-navigation__link" href="">Link</a>
-                    <a class="mdl-navigation__link" href="">Link</a>
-                    <a class="mdl-navigation__link" href="">Link</a>
-                    <a class="mdl-navigation__link" href="">Link</a>
-                </nav>
+
+            <h3>Filter by time of day:</h3>    
+            <input type="range" min="1" max="23" value="12" step="1" class="slider" id="myRange">
+            <div id="textbox">
+                <h4 padding=0 margin=0 class="alignleft">00:00</p>
+                <h4 padding=0 margin=0 class="alignright">24:00</p>
+                <h4 padding=0 margin=0 class="aligncenter">12:00</p>
+                
             </div>
 
-            <input type="range" min="1" max="24" value="12" step="1" class="slider" id="myRange">
+            <h3>This crime density map can be filtered by type of crime and time of day:</h3>  
+
 
             <style>
                 #map {
@@ -54,16 +55,44 @@
                     margin: 0;
                     padding: 0;
                 }
+                 #floating-panel {
+                    position: absolute;
+                    top: 10px;
+                    left: 25%;
+                    z-index: 5;
+                    background-color:	#9A00B0;
+                    padding: 5px;
+                    text-align: center;
+                    font-family: 'Roboto','sans-serif';
+                    line-height: 30px;
+                    padding-left: 10px;
+                    color: white;
+                  }
+                  #floating-panel {
+                    background-color:	#9A00B0;
+                    left: 25%;
+                    padding: 5px;
+                    position: absolute;
+                    top: 10px;
+                    z-index: 5;
+                    color: white;
+                  }
             </style>
     </head>
 
 </head>
 
 <body>
-
+    <div id="floating-panel">
+    <input type = "checkbox" id="assault" name="Assaults" onclick="dothething();"> Assaults 
+    <input type = "checkbox" id="robbery" name="Robbery" onclick="dothething();"> Robbery
+    <input type = "checkbox" id="burglary" name="Burglary" onclick="dothething();"> Burglary
+    <input type = "checkbox" id="at" name="AutoTheft" onclick="dothething();"> Auto Thefts 
+    </div>
     <div id="map"></div>
     <script>
         var map;
+        var filtered;
         var script = document.createElement('script');
 
 
@@ -88,6 +117,8 @@
             fetch('https://data.seattle.gov/resource/pu5n-trf4.json')
                 .then((resp) => resp.json())
                 .then(function (response) {
+                    var heatmapData = [];
+          
                     
                     var masterData = response;
                     console.log("master length: " + masterData.length);
@@ -99,10 +130,11 @@
                     }
                     else
                     {
-                        filteredData = filter(masterData, event.target.value);
+                        filteredData = filt(masterData, event.target.value);
                     }
 
                     console.log("filter length: " + filteredData.length);
+                    
 
                     return filteredData;
                 }).then(render)
@@ -111,13 +143,34 @@
         }
 
         function render(results) {
-            var heatmapData = [];
+             results = results.filter(function(result){
+
+            if(document.getElementById("assault").checked){
+                return result.event_clearance_group == 'ASSAULTS';
+            }
+            if(document.getElementById("robbery").checked){
+                return result.event_clearance_group == 'ROBBERY';
+            }
+           if(document.getElementById("burglary").checked){
+                return result.event_clearance_group == 'BURGLARY'
+            }
+            if(document.getElementById("at").checked){
+                return result.event_clearance_group == 'AUTO THEFTS'
+            }
+            return result
+          }
+          );
+             var heatmapData = [];
+            
+          
             for (var i = 0; i < results.length; i++) {
                 var lat = results[i].latitude;
                 var lng = results[i].longitude;
                 var latLng = new google.maps.LatLng(lat, lng);
                 heatmapData.push(latLng);
             }
+            
+             
 
             var heatmap = new google.maps.visualization.HeatmapLayer({
                 data: heatmapData,
@@ -143,7 +196,7 @@
             ])
         }
 
-        function filter(results, hour) {
+        function filt(results, hour) {
             var filteredResults = [];
             console.log("master in: "+ results.length);
 
